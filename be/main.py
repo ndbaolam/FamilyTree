@@ -8,11 +8,17 @@ from app.database import get_db_session, db
 from app.models import Person, PersonCreate, PersonUpdate, RelationshipCreate, GraphData, GraphNode, GraphEdge
 
 
+import os
+
 app = FastAPI()
+
+# Get allowed origins from env, default to *
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "*")
+allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

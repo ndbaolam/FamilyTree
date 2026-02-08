@@ -51,9 +51,24 @@ A modern, containerized web application to store, visualize, and manage a family
    - **MinIO Console**: http://localhost:9001 (User/Pass from `.env`)
 
 4. **Access the App**:
-   - Open [http://localhost:5173](http://localhost:5173).
+   - Open [http://localhost](http://localhost) or [http://localhost:5173](http://localhost:5173).
    - **To Edit**: Navigate to `/login` (or click "Admin Login" if available).
      - **Default Password**: `admin123` (configurable in `.env`)
+
+## Deployment to Server
+
+To deploy on a remote server (e.g., VPS with IP `1.2.3.4`):
+
+1. **Clone & Configure**: Follow steps 1-2 above.
+2. **Update `.env`**:
+   - `VITE_API_URL`: Set to `http://1.2.3.4:8000` (or your domain).
+   - `PUBLIC_MINIO_URL`: Set to `http://1.2.3.4:9000`.
+   - `ALLOWED_ORIGINS`: Set to `http://1.2.3.4,http://1.2.3.4:5173` (comma-separated).
+3. **Build & Run**:
+   ```bash
+   docker compose up -d --build
+   ```
+   *Note: Frontend build bakes the API URL into the static files, so you MUST rebuild if you change `VITE_API_URL`.*
 
 ## Usage Guide
 
@@ -103,7 +118,10 @@ A modern, containerized web application to store, visualize, and manage a family
 ### Troubleshooting
 
 - **500 Internal Server Error (Missing IDs)**:
-  If legacy data is missing IDs, run the migration script (if available) or clear the database.
+  If legacy data is missing IDs, run the migration script:
+  ```bash
+  docker compose exec backend python migrate_ids.py
+  ```
 
 - **Database Connection**:
   Ensure Neo4j is ready. It accesses `neo4j_data` volume. If you need to reset the DB, `docker compose down -v` (CAUTION: deletes all data).
