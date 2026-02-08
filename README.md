@@ -5,17 +5,20 @@ A modern, containerized web application to store, visualize, and manage a family
 ![Tech Stack](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat&logo=vue.js)
 ![Tech Stack](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat&logo=fastapi)
 ![Tech Stack](https://img.shields.io/badge/Neo4j-5-008CC1?style=flat&logo=neo4j)
+![Tech Stack](https://img.shields.io/badge/MinIO-RELEASE.2025-C72C48?style=flat&logo=minio)
 ![Tech Stack](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)
 
 ## Features
 
 - **Interactive Visualization**: Zoomable, pannable family tree graph (powered by Vue Flow).
-- **Ordered Layout**: Displays generations in rows, with siblings sorted by birth order (or custom order).
+- **Ordered Layout**: Displays generations in rows, automatically positioned.
 - **Public Read-Only View**: Guests can view the tree but cannot edit it.
 - **Admin Dashboard**: Secure area to manage people and relationships.
     - **Person Management**: Add/Edit profiles with details (Name, Gender, Dates, Biography).
-    - **Relationship Management**: visually create connections or delete them via the dashboard.
+    - **Avatar Upload**: Upload profile pictures for family members (stored in MinIO).
+    - **Relationship Management**: Visually create connections or delete them via the dashboard.
 - **Graph Database**: Uses Neo4j for efficient relationship storage and querying.
+- **Secure Configuration**: Environment variables for sensitive credentials.
 
 ## Prerequisites
 
@@ -30,19 +33,27 @@ A modern, containerized web application to store, visualize, and manage a family
    cd family-tree
    ```
 
-2. **Start the application**:
+2. **Configure Environment**:
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   Modify `.env` if you wish to change default credentials.
+
+3. **Start the application**:
    ```bash
    docker compose up -d --build
    ```
    This initializes:
    - **Frontend**: http://localhost:5173
    - **Backend API**: http://localhost:8000
-   - **Neo4j Database**: http://localhost:7474 (User: `neo4j`, Password: `password`)
+   - **Neo4j Database**: http://localhost:7474 (User/Pass from `.env`)
+   - **MinIO Console**: http://localhost:9001 (User/Pass from `.env`)
 
-3. **Access the App**:
+4. **Access the App**:
    - Open [http://localhost:5173](http://localhost:5173).
-   - **To Edit**: Navigate to `/login`.
-     - **Default Password**: `admin123`
+   - **To Edit**: Navigate to `/login` (or click "Admin Login" if available).
+     - **Default Password**: `admin123` (configurable in `.env`)
 
 ## Usage Guide
 
@@ -51,15 +62,14 @@ A modern, containerized web application to store, visualize, and manage a family
 - Click on any node to see detailed information in the side panel.
 
 ### Administrator
-1. **Login**: Go to the login page and enter the admin password.
-2. **Add Person**: Use the "Add Person" button in the top-left corner or the Admin Dashboard.
-3. **Connect People**:
-   - Drag a line from the handle (dot) of one person to another.
-   - Default relationship is `PARENT_OF`.
-4. **Delete Relationships**:
-   - Go to `/admin` (Dashboard).
-   - Switch to the "Relationships" tab.
-   - Click "Delete" next to the relationship you want to remove.
+1. **Login**: Go to the login page (`/login`) and enter the admin password.
+2. **Dashboard**: Navigate to `/admin`.
+3. **Manage People**:
+   - **Add**: Use the "Add Person" button.
+   - **Edit/Upload Avatar**: Click "Edit" on a person in the list. You can update their details and upload a profile picture.
+   - **Delete**: Remove a person and their relationships.
+4. **Connect People**:
+   - On the main tree view (while logged in as admin), drag a line from the handle of one person to another to create a `PARENT_OF` relationship.
 
 ## Development
 
@@ -68,10 +78,9 @@ A modern, containerized web application to store, visualize, and manage a family
 ```
 .
 ├── be/                 # Backend (FastAPI)
-│   ├── app/            # Application logic (models, database)
+│   ├── app/            # Application logic (models, database, storage)
 │   ├── main.py         # API Endpoints
 │   ├── debug_db.py     # Script to inspect DB content
-│   ├── migrate_ids.py  # Script to fix missing UUIDs
 │   └── Dockerfile
 ├── ui/                 # Frontend (Vue 3 + Pinia + Vue Flow)
 │   ├── src/
@@ -80,22 +89,24 @@ A modern, containerized web application to store, visualize, and manage a family
 │   │   ├── views/      # Page Views (Tree, Admin, Login)
 │   │   └── router/     # Navigation Routing
 │   └── Dockerfile
-└── docker-compose.yaml # Service Orchestration
+├── docker-compose.yaml # Service Orchestration
+├── .env                # Environment Configuration (GitIgnored)
+└── .env.example        # Example Configuration
 ```
 
 ### Key Commands
 
 - **Restart Backend**: `docker compose restart backend`
 - **View Logs**: `docker compose logs -f backend`
-- **Rebuild Frontend**: `docker compose build frontend && docker compose up -d frontend`
+- **Rebuild Services**: `docker compose up -d --build`
 
 ### Troubleshooting
 
 - **500 Internal Server Error (Missing IDs)**:
-  If the API fails to load the tree, it might be due to manual data insertion missing the `id` property. Run the migration script:
-  ```bash
-  docker compose exec backend python migrate_ids.py
-  ```
+  If legacy data is missing IDs, run the migration script (if available) or clear the database.
 
 - **Database Connection**:
   Ensure Neo4j is ready. It accesses `neo4j_data` volume. If you need to reset the DB, `docker compose down -v` (CAUTION: deletes all data).
+
+- **MinIO Access**:
+  Ensure port 9000 (API) and 9001 (Console) are available. Check `.env` for credentials.

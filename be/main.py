@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from neo4j import Session
 from uuid import uuid4
@@ -133,3 +133,49 @@ def get_tree(session: Session = Depends(get_db_session)):
             ))
     
     return GraphData(nodes=list(nodes.values()), edges=edges)
+
+@app.post("/people/{person_id}/avatar")
+async def upload_avatar(
+    person_id: str, 
+    file: UploadFile = File(...), 
+    session: Session = Depends(get_db_session)
+):
+    try:
+        from app.storage import minio_client
+        
+        # Read file content
+        content = await file.read()
+        
+        # Upload to MinIO (key is person_id)
+        # Use person_id as key, but maybe keep extension for content-type correctness if needed, 
+        # but req says "key is exactly the person’s ID".
+        # We'll trust the req: "key is exactly the person’s ID"
+        # But for browser to handle it well, often extension helps with mime sniffing if content-type header is wrong.
+        # MinIO/S3 uses the content-type metadata we set.
+        
+        file_url = minio_client.upload_file(
+            content, 
+            person_id, 
+            file.content_type or "application/octet-stream"
+        )
+        
+        if not file_url:
+            raise HTTPException(status_code=500, detail="Failed to upload avatar")
+            
+        # Update Neo4j
+        query = """
+        MATCH (p:Person {id: $id})
+        SET p.avatar_url = $url
+        RETURN p
+        """
+        result = session.run(query, id=person_id, url=file_url)
+        record = result.single()
+        
+        if not record:
+             raise HTTPException(status_code=404, detail="Person not found")
+             
+        return {"avatar_url": file_url}
+        
+    except Exception as e:
+        print(f"Upload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

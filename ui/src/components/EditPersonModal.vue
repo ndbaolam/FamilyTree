@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useFamilyStore } from '@/stores/familyStore';
 
 const props = defineProps<{
   show: boolean;
+  person?: any;
 }>();
 
 const emit = defineEmits(['close']);
 
 const store = useFamilyStore();
+
+const isEditing = computed(() => !!props.person);
 
 const form = ref({
   name: '',
@@ -19,11 +22,24 @@ const form = ref({
   avatar_url: ''
 });
 
-async function save() {
-  await store.createPerson(form.value);
-  emit('close');
-  // Reset form
-  form.value = {
+// Watch for changes in the person prop to populate the form
+watch(() => props.person, (newPerson) => {
+  if (newPerson) {
+    form.value = {
+      name: newPerson.name || '',
+      gender: newPerson.gender || 'Male',
+      birth_date: newPerson.birth_date || '',
+      death_date: newPerson.death_date || '',
+      biography: newPerson.biography || '',
+      avatar_url: newPerson.avatar_url || ''
+    };
+  } else {
+    resetForm();
+  }
+}, { immediate: true });
+
+function resetForm() {
+    form.value = {
     name: '',
     gender: 'Male',
     birth_date: '',
@@ -32,12 +48,41 @@ async function save() {
     avatar_url: ''
   };
 }
+
+const selectedFile = ref<File | null>(null);
+
+function handleFileUpload(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+        selectedFile.value = target.files[0];
+    }
+}
+
+async function save() {
+  let personId = props.person?.id;
+
+  if (isEditing.value && props.person) {
+    await store.updatePerson(props.person.id, form.value);
+  } else {
+    const created = await store.createPerson(form.value);
+    if (created) personId = created.id;
+  }
+
+  if (personId && selectedFile.value) {
+      // Explicit check to satisfy TS
+      await store.uploadAvatar(personId, selectedFile.value as File);
+  }
+
+  emit('close');
+  resetForm();
+  selectedFile.value = null;
+}
 </script>
 
 <template>
   <div v-if="show" class="modal-overlay">
     <div class="modal">
-      <h2>Add Person</h2>
+      <h2>{{ isEditing ? 'Edit Person' : 'Add Person' }}</h2>
       <form @submit.prevent="save">
         <div class="form-group">
           <label>Name:</label>
@@ -62,6 +107,14 @@ async function save() {
         <div class="form-group">
           <label>Biography:</label>
           <textarea v-model="form.biography"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Avatar URL (or upload below):</label>
+            <input v-model="form.avatar_url" placeholder="https://..." />
+        </div>
+         <div class="form-group">
+            <label>Upload Avatar:</label>
+            <input type="file" @change="handleFileUpload" accept="image/*" />
         </div>
         <div class="actions">
           <button type="button" @click="$emit('close')">Cancel</button>

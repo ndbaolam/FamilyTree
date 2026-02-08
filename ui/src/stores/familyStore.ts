@@ -24,13 +24,19 @@ export const useFamilyStore = defineStore('family', {
         edges: [] as Edge[],
         loading: false,
         error: null as string | null,
-        isAdmin: false,
+        isAdmin: localStorage.getItem('isAdmin') === 'true',
     }),
     actions: {
         async fetchTree() {
             this.loading = true;
             try {
                 const response = await api.get<GraphData>('/tree');
+
+                // Populate people array
+                this.people = response.data.nodes.map((node: any) => ({
+                    id: node.id,
+                    ...node.data
+                }));
 
                 // Parse edges first to build the graph structure
                 const rawEdges = response.data.edges.map(e => ({
@@ -128,10 +134,48 @@ export const useFamilyStore = defineStore('family', {
                 };
             });
         },
-        async createPerson(person: Omit<Person, 'id'>) {
+        async createPerson(person: Omit<Person, 'id'>): Promise<Person | undefined> {
             try {
                 const response = await api.post<Person>('/people', person);
                 this.people.push(response.data);
+                await this.fetchTree();
+                return response.data;
+            } catch (err: any) {
+                this.error = err.message;
+            }
+        },
+        async updatePerson(id: string, person: Partial<Person>) {
+            try {
+                const response = await api.put<Person>(`/people/${id}`, person);
+                // Update local state
+                const index = this.people.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    this.people[index] = response.data;
+                }
+                await this.fetchTree();
+            } catch (err: any) {
+                this.error = err.message;
+            }
+        },
+        async deletePerson(id: string) {
+            try {
+                await api.delete(`/people/${id}`);
+                this.people = this.people.filter(p => p.id !== id);
+                await this.fetchTree();
+            } catch (err: any) {
+                this.error = err.message;
+            }
+        },
+        async uploadAvatar(personId: string, file: File) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                await api.post(`/people/${personId}/avatar`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
                 await this.fetchTree();
             } catch (err: any) {
                 this.error = err.message;
@@ -158,14 +202,16 @@ export const useFamilyStore = defineStore('family', {
             }
         },
         login(password: string) {
-            if (password === 'admin123') {
+            if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
                 this.isAdmin = true;
+                localStorage.setItem('isAdmin', 'true');
                 return true;
             }
             return false;
         },
         logout() {
             this.isAdmin = false;
+            localStorage.removeItem('isAdmin');
         }
     },
 });

@@ -6,6 +6,7 @@ import EditPersonModal from '@/components/EditPersonModal.vue';
 const store = useFamilyStore();
 const activeTab = ref('people');
 const showEditModal = ref(false);
+const selectedPerson = ref<any>(null);
 
 onMounted(() => {
   store.fetchTree();
@@ -14,6 +15,22 @@ onMounted(() => {
 const sortedPeople = computed(() => {
     return [...store.people].sort((a, b) => a.name.localeCompare(b.name));
 });
+
+function openAddPerson() {
+    selectedPerson.value = null;
+    showEditModal.value = true;
+}
+
+function editPerson(person: any) {
+    selectedPerson.value = person;
+    showEditModal.value = true;
+}
+
+function deletePerson(id: string) {
+    if (confirm('Are you sure you want to delete this person? This will also remove all their relationships.')) {
+        store.deletePerson(id);
+    }
+}
 
 function deleteRelationship(id: string) {
     if (confirm('Are you sure you want to delete this relationship?')) {
@@ -38,7 +55,7 @@ function deleteRelationship(id: string) {
         <div v-if="activeTab === 'people'">
              <div class="header-actions">
                 <h2>People Management</h2>
-                <button @click="showEditModal = true" class="btn btn-primary">+ Add Person</button>
+                <button @click="openAddPerson" class="btn btn-primary">+ Add Person</button>
             </div>
             
             <div class="table-container">
@@ -61,9 +78,8 @@ function deleteRelationship(id: string) {
                             <td>{{ person.gender }}</td>
                             <td>{{ person.birth_date || '-' }}</td>
                             <td>
-                                <!-- Edit/Delete functionality to be implemented in next steps or extended modal -->
-                                <button class="btn-sm" disabled>Edit</button>
-                                <button class="btn-sm" disabled>Delete</button>
+                                <button class="btn-sm" @click="editPerson(person)">Edit</button>
+                                <button class="btn-sm btn-danger" @click="deletePerson(person.id)">Delete</button>
                             </td>
                         </tr>
                         <tr v-if="sortedPeople.length === 0">
@@ -105,7 +121,7 @@ function deleteRelationship(id: string) {
         </div>
     </div>
 
-    <EditPersonModal :show="showEditModal" @close="showEditModal = false" />
+    <EditPersonModal :show="showEditModal" :person="selectedPerson" @close="showEditModal = false" />
   </div>
 </template>
 

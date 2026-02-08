@@ -1,22 +1,32 @@
 :root {
   /* Color Palette - High Contrast & Modern */
-  --color-bg: #f8f9fa;       /* Soft off-white background */
-  --color-surface: #ffffff;  /* Pure white surface */
-  --color-text-primary: #1a1a1a; /* Dark gray/black for text */
-  --color-text-secondary: #4a4a4a; /* Medium gray for secondary text */
-  --color-border: #e2e8f0;   /* Light gray border */
-  --color-primary: #2563eb;  /* Vibrant Blue for primary actions */
+  --color-bg: #f8f9fa;
+  /* Soft off-white background */
+  --color-surface: #ffffff;
+  /* Pure white surface */
+  --color-text-primary: #1a1a1a;
+  /* Dark gray/black for text */
+  --color-text-secondary: #4a4a4a;
+  /* Medium gray for secondary text */
+  --color-border: #e2e8f0;
+  /* Light gray border */
+  --color-primary: #2563eb;
+  /* Vibrant Blue for primary actions */
   --color-primary-hover: #1d4ed8;
   --color-success: #16a34a;
   --color-error: #dc2626;
 
   /* Typography */
-  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-base: 'Noto Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-size-base: 16px;
-  --font-size-lg: 1.125rem; /* 18px */
-  --font-size-xl: 1.25rem;  /* 20px */
-  --font-size-2xl: 1.5rem;  /* 24px */
-  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-lg: 1.125rem;
+  /* 18px */
+  --font-size-xl: 1.25rem;
+  /* 20px */
+  --font-size-2xl: 1.5rem;
+  /* 24px */
+  --font-size-3xl: 1.875rem;
+  /* 30px */
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -35,7 +45,9 @@
 }
 
 /* Global Reset & Base Styles */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -101,17 +113,22 @@ button {
   color: var(--color-text-secondary);
 }
 
-.form-input, .form-textarea, .form-select {
+.form-input,
+.form-textarea,
+.form-select {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 2px solid var(--color-border); /* Thicker border for visibility */
+  border: 2px solid var(--color-border);
+  /* Thicker border for visibility */
   border-radius: var(--border-radius-md);
   font-size: var(--font-size-base);
   background-color: var(--color-surface);
   color: var(--color-text-primary);
 }
 
-.form-input:focus, .form-textarea:focus, .form-select:focus {
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);

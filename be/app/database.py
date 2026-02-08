@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+URI = os.getenv("NEO4J_URI", "bolt://neo4j:7687")
+# If NEO4J_PASSWORD is set, use it. Otherwise fallback to None (or handle appropriately).
+# We are designing this to REQURE env vars ideally, but fallback is okay for dev.
 AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "password"))
 
 class Database:
