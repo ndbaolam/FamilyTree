@@ -2,12 +2,14 @@ services:
   neo4j:
     image: neo4j:5
     restart: unless-stopped
+    hostname: neo4j
+    container_name: neo4j
     ports:
       - "7474:7474"   # web UI
       - "7687:7687"   # bolt driver
     environment:
       NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
-      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_initial__size: 512m
       NEO4J_server_memory_heap_max__size: 512m
     volumes:
       - neo4j_data:/data
@@ -15,6 +17,8 @@ services:
 
   backend:
     build: ./be
+    hostname: backend
+    container_name: backend
     ports:
       - "8000:8000"
     environment:
@@ -39,6 +43,8 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL}
         - VITE_ADMIN_PASSWORD=${VITE_ADMIN_PASSWORD}
+    hostname: frontend
+    container_name: frontend
     ports:
       - "80:80"
     # volumes:
@@ -53,6 +59,8 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    hostname: minio
+    container_name: minio
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
